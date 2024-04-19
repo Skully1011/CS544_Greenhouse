@@ -1,0 +1,23 @@
+ 1 Channel 5V Relay Module:
+
+Supply Voltage: 5V
+
+Quiescent Current: 4mA
+
+Working Current: 65mA
+
+Trigger Voltage: 0-2V
+
+Trigger Current: 2mA
+
+VCC: positive power supply
+
+GND: negative power supply
+
+IN: can be high or low level control relay
+
+NO: normally open relay interface
+
+COM: Common Interface Relays
+
+NC: normally closed relay interface 

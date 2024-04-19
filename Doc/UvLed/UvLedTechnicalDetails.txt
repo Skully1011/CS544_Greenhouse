@@ -1,0 +1,30 @@
+Brand 	‎TOPXCDZ
+Light Type 	‎LED
+Special Feature 	‎Energy Efficient
+Wattage 	‎3 watts
+Specific Uses For Product 	‎Lamp
+Light Color 	‎Purple
+Voltage 	‎3.6 Volts
+Unit Count 	‎1.0 Count
+Number of Items 	‎10
+Shape 	‎Bulb
+Material 	‎Aluminum
+Model Name 	‎UV
+Connectivity Technology 	‎Normal bulb
+Controller Type 	‎Push Button
+Included Components 	‎led
+Light Source Type 	‎LED
+Light Source Wattage 	‎3 Watts
+Average Life 	‎50000 Hours
+Manufacturer 	‎TOPXCDZ
+Part Number 	‎3w
+Item Weight 	‎0.528 ounces
+Package Dimensions 	‎4.69 x 3.03 x 0.31 inches
+Country of Origin 	‎China
+Item model number 	‎3W
+Color 	‎3w 395nm With 20mm Pcb
+Finish types 	‎Purple
+Special Features 	‎Energy Efficient
+Batteries Included? 	‎No
+Batteries Required? 	‎Yes
+Wattage 	‎3 Watts 

@@ -1,0 +1,9 @@
+ Capacitive Soil Moisture Sensor:
+
+Operating voltage: 3.3 ~ 5.5 VDC
+
+Output voltage: 0 ~ 3.0 VDC
+
+Interface: PH2.54-3P
+
+Pin: Analog signal output, GND, VCC 

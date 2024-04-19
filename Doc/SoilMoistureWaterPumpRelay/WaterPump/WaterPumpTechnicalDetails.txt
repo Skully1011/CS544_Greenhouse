@@ -1,0 +1,21 @@
+ Mini Water Pump:
+
+DC Voltage: 3-5 V
+
+Outside diameter of water outlet: 0.29"/7.5mm
+
+Inside diameter of water outlet: 0.17"/4.5mm
+
+Water inlet diameter: 0.19"/5mm
+
+Driving mode: brushless dc design, magnetic driving
+
+Vinyl Tubing:
+
+Material: PVC
+
+I.D. Size: 0.22"/5.54mm
+
+O.D. Size: 0.32"/8.20mm
+
+Length: 39.37inch/100cm 
