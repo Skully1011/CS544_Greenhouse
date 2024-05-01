@@ -31,7 +31,7 @@ struct SensorData{
   int lightLevel;
   float humidity;
   float temperature;
-  float soilMoisture;
+  int soilMoisture;
   float waterLevel;
 };
 
@@ -166,15 +166,15 @@ void displayInfoLcd(){
   lcd.print(lightStr);
   lcd.setCursor(0, 1);
   lcd.print("Humidity: ");
-  lcd.print(String(sensorData.humidity, 2));
+  lcd.print(String(sensorData.humidity, 1));
   lcd.print('%');
   lcd.setCursor(0, 2);
   lcd.print("Temperature ");
-  lcd.print(String(sensorData.temperature, 2));
+  lcd.print(String(sensorData.temperature, 1));
   lcd.print(" *C");
   lcd.setCursor(0, 3);
   lcd.print("Soil moisture: ");
-  lcd.print(String(sensorData.soilMoisture, 2));
+  lcd.print(String(sensorData.soilMoisture, 10));
   delay(1000);
 
   // display water level?
