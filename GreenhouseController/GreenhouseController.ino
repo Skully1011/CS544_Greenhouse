@@ -20,7 +20,8 @@ It will also control the watering pumps for the plants along with controlling th
 #define DHT_SENSOR A0
 #define LIGHT_SENSOR A1
 #define WATER_SENSOR A2
-#define SOIL_SENSOR A3
+#define SOIL_SENSOR_LEFT A3
+#define SOIL_SENSOR_RIGHT A4
 
 // misc.
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
