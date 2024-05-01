@@ -32,7 +32,7 @@ struct SensorData{
   float humidity;
   float temperature;
   int soilMoisture;
-  float waterLevel;
+  int waterLevel;
 };
 
 // globals
@@ -73,6 +73,7 @@ void setup() {
   sensorData.humidity = 0;
   sensorData.temperature = 0;
   sensorData.soilMoisture = 0;
+  sensorData.waterLevel = 0;
 
   // light sensor
 
@@ -129,6 +130,7 @@ void gatherSensorData(){
   sensorData.temperature = t;
 
   sensorData.soilMoisture = analogRead(SOIL_SENSOR);
+  sensorData.waterLevel = analogRead(WATER_SENSOR);
 }
 
 String translateLightLevel(){
@@ -175,12 +177,15 @@ void displayInfoLcd(){
   lcd.setCursor(0, 3);
   lcd.print("Soil moisture: ");
   lcd.print(String(sensorData.soilMoisture, 10));
-  delay(1000);
+
+  delay(3000);
 
   // display water level?
-  //delay(10000);
-  // lcd.clear();
-  // lcd.home();
-  // lcd.print("Water level: %f", sensorData.waterLevel);
+  lcd.clear();
+  lcd.home();
+  lcd.print("Water level: ");
+  lcd.print(String(sensorData.waterLevel, 10));
+
+  delay(3000);
 
 }
