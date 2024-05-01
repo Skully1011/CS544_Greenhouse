@@ -1,8 +1,10 @@
-#define LED_PIN 2
+#define RED_LED_PIN 2
+#define UV_LED_PIN 3
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(UV_LED_PIN, OUTPUT);
 }
 
 void loop() {
@@ -10,13 +12,15 @@ void loop() {
   // Gradually Increase Duty Cycle
   for(int i=0; i<255; i++)
   {
-    analogWrite(LED_PIN, i);
+    analogWrite(RED_LED_PIN, i);
+    analogWrite(UV_LED_PIN, i);
     delay(5);
   }
   // Gradually Decrease Duty Cycle
   for(int i=255; i>0; i--)
   {
-    analogWrite(LED_PIN, i);
+    analogWrite(RED_LED_PIN, i);
+    analogWrite(UV_LED_PIN, i);
     delay(5);
   }
 }

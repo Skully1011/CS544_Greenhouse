@@ -17,6 +17,7 @@ void setup(){
 }
 
 void loop(){
+  // reads the input on analog pin A0 (value between 0 and 1023)
 	// read potentiometer position
 	value_pot = analogRead(A0);   // read the voltage at pin A0 (potentiometer voltage)
 
@@ -35,5 +36,6 @@ void loop(){
 		stat_LED = !stat_LED;
 		time_start = millis();
 	}
+
 	digitalWrite(13, stat_LED);
 }
