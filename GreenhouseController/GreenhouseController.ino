@@ -20,33 +20,43 @@ It will also control the watering pumps for the plants along with controlling th
 
 // analog pins
 #define DHT_SENSOR A0
-#define LIGHT_SENSOR A1
-#define WATER_SENSOR A2
-#define SOIL_SENSOR A3
+#define LIGHT_SENSOR1 A1
+#define LIGHT_SENSOR2 A2
+#define WATER_SENSOR A3
+#define SOIL_SENSOR1 A4
+#define SOIL_SENSOR2 A5
+
 
 // misc.
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
 #define LED_OFF 0
 #define LED_ON 255
 
-struct SensorData{
-  int lightLevel;
+struct PlantSensorData{
+  int soilMoisture;
+  unsigned long timeSinceLastWater;
+};
+
+struct GreenhouseSensorData{
+  float lightLevel;
   float humidity;
   float temperature;
-  int soilMoisture;
   int waterLevel;
 };
 
 // globals
 LiquidCrystal_I2C lcd(0x27, 20, 4); // I2C address 0x27, 16 column and 2 rows
-SensorData sensorData;
+GreenhouseSensorData greenhouseSensorData;
+PlantSensorData plant1;
+PlantSensorData plant2;
 DHT dht(DHT_SENSOR, DHTTYPE);
 unsigned long timeStart;
 unsigned long timeSinceLastPrint;
 unsigned long timeSinceLastWater;
+float avgLightLevel;
 
 // function prototypes
-// just printing sensorData
+// just printing greenhouseSensorData
 void initLcdSensorStrings();
 void displayInfoLcd();
 // doesn't return anything but modifies a global struct
@@ -59,7 +69,7 @@ String translateMoistureLevel();
 void initLeds();
 void setLeds(int ledState);
 
-void pumpWater();
+void pumpWater(int pump);
 
 
 
@@ -79,11 +89,10 @@ void setup() {
   Serial.begin(9600);
 
   // sensor data struct
-  sensorData.lightLevel = 0;
-  sensorData.humidity = 0;
-  sensorData.temperature = 0;
-  sensorData.soilMoisture = 0;
-  sensorData.waterLevel = 0;
+  greenhouseSensorData.lightLevel = 0;
+  greenhouseSensorData.humidity = 0;
+  greenhouseSensorData.temperature = 0;
+  greenhouseSensorData.waterLevel = 0;
 
   // LEDs
   initLeds();
@@ -97,7 +106,8 @@ void setup() {
   //time at start
   timeStart = millis();
   timeSinceLastPrint = millis();
-  timeSinceLastWater = millis();
+  plant1.timeSinceLastWater = millis();
+  plant2.timeSinceLastWater = millis();
 }
 
 void loop() {
@@ -110,7 +120,7 @@ void loop() {
 
   // do control
   // check light level and turn LEDs on or off
-  if (sensorData.lightLevel > 800){
+  if (greenhouseSensorData.lightLevel > 800){
     setLeds(LED_ON);
   }
   else {
@@ -118,10 +128,17 @@ void loop() {
   }
 
   // water plants if necessary
-  if (sensorData.soilMoisture > 450 && sensorData.waterLevel > 50){
-    // if (millis() - timeSinceLastWater > 1000){
-    //   pumpWater();
-    //   timeSinceLastWater = millis();
+  if (plant1.soilMoisture > 450 && greenhouseSensorData.waterLevel > 50){
+    // if (millis() - plant1.timeSinceLastWater > 1000){
+    //   pumpWater(PUMP1);
+    //   plant1.timeSinceLastWater = millis();
+    // }
+  }
+
+  if (plant2.soilMoisture > 450 && greenhouseSensorData.waterLevel > 50){
+    // if (millis() - plant2.timeSinceLastWater > 1000){
+    //   pumpWater(PUMP2);
+    //   plant2.timeSinceLastWater = millis();
     // }
   }
 
@@ -145,7 +162,10 @@ void setLeds(int ledState){
 }
 
 void gatherSensorData(){
-  sensorData.lightLevel = analogRead(LIGHT_SENSOR);
+  int lightLevel1 = analogRead(LIGHT_SENSOR1);
+  int lightLevel2 = analogRead(LIGHT_SENSOR2);
+  greenhouseSensorData.lightLevel = (lightLevel1 + lightLevel2)/2;
+
   float h = dht.readHumidity();
   float t = dht.readTemperature();
 
@@ -153,26 +173,28 @@ void gatherSensorData(){
     Serial.println("Failed to read from DHT sensor!");
     return;
   }
-  sensorData.humidity = h;
-  sensorData.temperature = t;
 
-  sensorData.soilMoisture = analogRead(SOIL_SENSOR);
-  sensorData.waterLevel = analogRead(WATER_SENSOR);
+  greenhouseSensorData.humidity = h;
+  greenhouseSensorData.temperature = t;
+
+  plant1.soilMoisture = analogRead(SOIL_SENSOR1);
+  plant2.soilMoisture = analogRead(SOIL_SENSOR2);
+  greenhouseSensorData.waterLevel = analogRead(WATER_SENSOR);
 }
 
 String translateLightLevel(){
   String lightStr;
 
-  if (sensorData.lightLevel < 100) {
+  if (greenhouseSensorData.lightLevel < 100) {
       Serial.println("Very bright");
       lightStr = "Bright ";
-    } else if (sensorData.lightLevel < 200) {
+    } else if (greenhouseSensorData.lightLevel < 200) {
       Serial.println(" - Bright");
       lightStr = "Bright ";
-    } else if (sensorData.lightLevel < 500) {
+    } else if (greenhouseSensorData.lightLevel < 500) {
       Serial.println(" - Light");
       lightStr = "Light  ";
-    } else if (sensorData.lightLevel < 800) {
+    } else if (greenhouseSensorData.lightLevel < 800) {
       Serial.println(" - Dim");
       lightStr = "Dim    ";
     } else {
@@ -183,19 +205,19 @@ String translateLightLevel(){
   return lightStr;
 }
 
-String translateMoistureLevel(){
+String translateMoistureLevel(int soilMoisture){
   String moistureStr;
 
-  if (sensorData.soilMoisture < 300) {
+  if (soilMoisture < 300) {
       Serial.println(" - Soaked");
       moistureStr = "Soaked";
-    } else if (sensorData.soilMoisture < 400) {
+    } else if (soilMoisture < 400) {
       Serial.println(" - Wet");
       moistureStr = " Wet  ";
-    } else if (sensorData.soilMoisture < 500) {
+    } else if (soilMoisture < 500) {
       Serial.println(" - Damp");
       moistureStr = " Damp ";
-    } else if (sensorData.soilMoisture < 600) {
+    } else if (soilMoisture < 600) {
       Serial.println(" - Dry");
       moistureStr = " Dry  ";
     } else {
@@ -244,23 +266,24 @@ void displayInfoLcd(){
   lcd.print(lightStr);
 
   lcd.setCursor(10, 1);
-  lcd.print(String(sensorData.humidity, 1));
+  lcd.print(String(greenhouseSensorData.humidity, 1));
   Serial.print("Humidity: ");
-  Serial.print(sensorData.humidity);
+  Serial.print(greenhouseSensorData.humidity);
   Serial.println();
 
 
   lcd.setCursor(12, 2);
-  lcd.print(String(convertCelsToFahren(sensorData.temperature), 1));
+  lcd.print(String(convertCelsToFahren(greenhouseSensorData.temperature), 1));
 
-  moistureStr = translateMoistureLevel();
+  moistureStr = translateMoistureLevel(plant1.soilMoisture);
   lcd.setCursor(14, 3);
   lcd.print(String(moistureStr));
   Serial.print("Soil moisture: ");
-  Serial.print(sensorData.soilMoisture);
+  Serial.print(plant1.soilMoisture);
+  Serial.print(plant2.soilMoisture);
   Serial.println();
 
-  if (sensorData.waterLevel < 50){
+  if (greenhouseSensorData.waterLevel < 50){
     // wait a few seconds before displaying the warning
     while (millis() - lcdDisplayTime < 3000){};
     lcd.clear();
@@ -274,22 +297,20 @@ void displayInfoLcd(){
     initLcdSensorStrings();
   }
   Serial.print("Water level: ");
-  Serial.print(sensorData.waterLevel);
+  Serial.print(greenhouseSensorData.waterLevel);
   Serial.println();
 
   // display water level?
   // lcd.clear();
   // lcd.home();
   // lcd.print("Water level: ");
-  // lcd.print(String(sensorData.waterLevel, 10));
+  // lcd.print(String(greenhouseSensorData.waterLevel, 10));
 
 }
 
-void pumpWater(){
+void pumpWater(int pump){
   // the relay which controls the pump is active LOW logic; pumps when set LOW
-  digitalWrite(PUMP1, LOW);
-  digitalWrite(PUMP2, LOW);
+  digitalWrite(pump, LOW);
   delay(1000);
-  digitalWrite(PUMP1, HIGH);
-  digitalWrite(PUMP2, HIGH);
+  digitalWrite(pump, HIGH);
 }
