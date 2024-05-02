@@ -15,6 +15,8 @@ It will also control the watering pumps for the plants along with controlling th
 // digital pins
 #define RED_LED_PIN 2
 #define UV_LED_PIN 3
+#define PUMP1 4
+#define PUMP2 5
 
 // analog pins
 #define DHT_SENSOR A0
@@ -39,28 +41,36 @@ struct SensorData{
 LiquidCrystal_I2C lcd(0x27, 20, 4); // I2C address 0x27, 16 column and 2 rows
 SensorData sensorData;
 DHT dht(DHT_SENSOR, DHTTYPE);
-byte i2c_rcv = 0b0;
+unsigned long timeStart;
+unsigned long timeSinceLastPrint;
+unsigned long timeSinceLastWater;
 
 // function prototypes
 // just printing sensorData
+void initLcdSensorStrings();
 void displayInfoLcd();
 // doesn't return anything but modifies a global struct
 void gatherSensorData();
+float convertCelsToFahren(float celsius);
+
 String translateLightLevel();
+String translateMoistureLevel();
+
 void initLeds();
 void setLeds(int ledState);
 
+void pumpWater();
+
+
 
 void setup() {
-  // I2C bus
-  //Wire.begin();
-
   // LCD screen
   lcd.init(); //initialize the lcd
   lcd.backlight(); //open the backlight 
   lcd.setCursor(0, 0);
+  initLcdSensorStrings();
   // debug
-  lcd.print("Hello World!");
+  // lcd.print("Hello World!");
 
   //  DHT sensor (humidity & temp.)
   dht.begin();
@@ -75,19 +85,30 @@ void setup() {
   sensorData.soilMoisture = 0;
   sensorData.waterLevel = 0;
 
-  // light sensor
-
-
   // LEDs
   initLeds();
 
+  // Pumps
+  pinMode(PUMP1, OUTPUT);
+  pinMode(PUMP2, OUTPUT);
+  digitalWrite(PUMP1, HIGH);
+  digitalWrite(PUMP2, HIGH);
+
+  //time at start
+  timeStart = millis();
+  timeSinceLastPrint = millis();
+  timeSinceLastWater = millis();
 }
 
 void loop() {
+
   // put your main code here, to run repeatedly:
   // gather data
   gatherSensorData();
   // do processing
+
+
+  // do control
   // check light level and turn LEDs on or off
   if (sensorData.lightLevel > 800){
     setLeds(LED_ON);
@@ -96,14 +117,20 @@ void loop() {
     setLeds(LED_OFF);
   }
 
-  //check soil moisture and water plants if dry
-  if (sensorData.soilMoisture < 50){
-    // do thing
+  // water plants if necessary
+  if (sensorData.soilMoisture > 450 && sensorData.waterLevel > 50){
+    // if (millis() - timeSinceLastWater > 1000){
+    //   pumpWater();
+    //   timeSinceLastWater = millis();
+    // }
   }
 
-  // do control
   // display information
-  displayInfoLcd();
+  // only update every 2 seconds; avoids flickering lcd
+  if (millis() - timeSinceLastPrint > 2000){
+    displayInfoLcd();
+    timeSinceLastPrint = millis();
+  }
 }
 
 void initLeds(){
@@ -134,58 +161,135 @@ void gatherSensorData(){
 }
 
 String translateLightLevel(){
-  //char lightStr[7] = "";
   String lightStr;
 
   if (sensorData.lightLevel < 100) {
       Serial.println("Very bright");
-      lightStr = "Bright";
+      lightStr = "Bright ";
     } else if (sensorData.lightLevel < 200) {
       Serial.println(" - Bright");
-      lightStr = "Bright";
+      lightStr = "Bright ";
     } else if (sensorData.lightLevel < 500) {
       Serial.println(" - Light");
-      lightStr = "Light";
+      lightStr = "Light  ";
     } else if (sensorData.lightLevel < 800) {
       Serial.println(" - Dim");
-      lightStr = "Dim";
+      lightStr = "Dim    ";
     } else {
       Serial.println(" - Dark");
-      lightStr = "Dark";
+      lightStr = "Dark   ";
     }
 
-  
   return lightStr;
 }
 
-void displayInfoLcd(){
-  String lightStr = "";
-  // display sensor data on each row
+String translateMoistureLevel(){
+  String moistureStr;
+
+  if (sensorData.soilMoisture < 300) {
+      Serial.println(" - Soaked");
+      moistureStr = "Soaked";
+    } else if (sensorData.soilMoisture < 400) {
+      Serial.println(" - Wet");
+      moistureStr = " Wet  ";
+    } else if (sensorData.soilMoisture < 500) {
+      Serial.println(" - Damp");
+      moistureStr = " Damp ";
+    } else if (sensorData.soilMoisture < 600) {
+      Serial.println(" - Dry");
+      moistureStr = " Dry  ";
+    } else {
+      Serial.println(" - Arid");
+      moistureStr = " Arid ";
+    }
+
+  return moistureStr;
+}
+
+float convertCelsToFahren(float celsius){
+  float fahrenheit = (celsius * 1.8) + 32.0;
+  return fahrenheit;
+}
+
+void initLcdSensorStrings(){
+  // This function optimizes LCD printing so we can avoid printing
+  // the entire strings 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lightStr = translateLightLevel();
   lcd.print("Light level: ");
-  lcd.print(lightStr);
+
   lcd.setCursor(0, 1);
   lcd.print("Humidity: ");
-  lcd.print(String(sensorData.humidity, 1));
+  lcd.setCursor(14, 1);
   lcd.print('%');
+
   lcd.setCursor(0, 2);
   lcd.print("Temperature ");
-  lcd.print(String(sensorData.temperature, 1));
-  lcd.print(" *C");
-  lcd.setCursor(0, 3);
-  lcd.print("Soil moisture: ");
-  lcd.print(String(sensorData.soilMoisture, 10));
+  lcd.setCursor(15, 2);
+  lcd.print(" *F");
 
-  delay(3000);
+  lcd.setCursor(0, 3);
+  lcd.print("Soil moisture:");
+}
+
+void displayInfoLcd(){
+  unsigned long lcdDisplayTime = millis();
+  String lightStr = "";
+  String moistureStr = "";
+  // display sensor data on each row
+  // lcd.clear();
+  // lightStr will always start on column 13
+  lightStr = translateLightLevel();
+  lcd.setCursor(13, 0);
+  lcd.print(lightStr);
+
+  lcd.setCursor(10, 1);
+  lcd.print(String(sensorData.humidity, 1));
+  Serial.print("Humidity: ");
+  Serial.print(sensorData.humidity);
+  Serial.println();
+
+
+  lcd.setCursor(12, 2);
+  lcd.print(String(convertCelsToFahren(sensorData.temperature), 1));
+
+  moistureStr = translateMoistureLevel();
+  lcd.setCursor(14, 3);
+  lcd.print(String(moistureStr));
+  Serial.print("Soil moisture: ");
+  Serial.print(sensorData.soilMoisture);
+  Serial.println();
+
+  if (sensorData.waterLevel < 50){
+    // wait a few seconds before displaying the warning
+    while (millis() - lcdDisplayTime < 3000){};
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Water level low!");
+    lcd.setCursor(0, 1);
+    lcd.print("Please refill");
+    lcd.setCursor(0, 2);
+    lcd.print("reservoir.");
+    while (millis() - lcdDisplayTime < 6000){};
+    initLcdSensorStrings();
+  }
+  Serial.print("Water level: ");
+  Serial.print(sensorData.waterLevel);
+  Serial.println();
 
   // display water level?
-  lcd.clear();
-  lcd.home();
-  lcd.print("Water level: ");
-  lcd.print(String(sensorData.waterLevel, 10));
+  // lcd.clear();
+  // lcd.home();
+  // lcd.print("Water level: ");
+  // lcd.print(String(sensorData.waterLevel, 10));
 
-  delay(3000);
+}
 
+void pumpWater(){
+  // the relay which controls the pump is active LOW logic; pumps when set LOW
+  digitalWrite(PUMP1, LOW);
+  digitalWrite(PUMP2, LOW);
+  delay(1000);
+  digitalWrite(PUMP1, HIGH);
+  digitalWrite(PUMP2, HIGH);
 }
