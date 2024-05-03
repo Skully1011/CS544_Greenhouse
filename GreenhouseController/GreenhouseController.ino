@@ -31,6 +31,7 @@ It will also control the watering pumps for the plants along with controlling th
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
 #define LED_OFF 0
 #define LED_ON 255
+#define NUM_PLANTS 2
 
 struct PlantSensorData{
   int soilMoisture;
@@ -49,6 +50,7 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // I2C address 0x27, 16 column and 2 rows
 GreenhouseSensorData greenhouseSensorData;
 PlantSensorData plant1;
 PlantSensorData plant2;
+PlantSensorData plants[NUM_PLANTS] = {plant1, plant2};
 DHT dht(DHT_SENSOR, DHTTYPE);
 unsigned long timeStart;
 unsigned long timeSinceLastPrint;
@@ -120,7 +122,7 @@ void loop() {
 
   // do control
   // check light level and turn LEDs on or off
-  if (greenhouseSensorData.lightLevel > 800){
+  if (greenhouseSensorData.lightLevel > 500){
     setLeds(LED_ON);
   }
   else {
@@ -129,17 +131,17 @@ void loop() {
 
   // water plants if necessary
   if (plant1.soilMoisture > 450 && greenhouseSensorData.waterLevel > 50){
-    // if (millis() - plant1.timeSinceLastWater > 1000){
-    //   pumpWater(PUMP1);
-    //   plant1.timeSinceLastWater = millis();
-    // }
+    if (millis() - plant1.timeSinceLastWater > 1000){
+      pumpWater(PUMP1);
+      plant1.timeSinceLastWater = millis();
+    }
   }
 
   if (plant2.soilMoisture > 450 && greenhouseSensorData.waterLevel > 50){
-    // if (millis() - plant2.timeSinceLastWater > 1000){
-    //   pumpWater(PUMP2);
-    //   plant2.timeSinceLastWater = millis();
-    // }
+    if (millis() - plant2.timeSinceLastWater > 1000){
+      pumpWater(PUMP2);
+      plant2.timeSinceLastWater = millis();
+    }
   }
 
   // display information
@@ -164,6 +166,10 @@ void setLeds(int ledState){
 void gatherSensorData(){
   int lightLevel1 = analogRead(LIGHT_SENSOR1);
   int lightLevel2 = analogRead(LIGHT_SENSOR2);
+  // Serial.print("Light sensor 1: ");
+  // Serial.println(lightLevel1);
+  // Serial.print("Light sensor 2: ");
+  // Serial.println(lightLevel2);
   greenhouseSensorData.lightLevel = (lightLevel1 + lightLevel2)/2;
 
   float h = dht.readHumidity();
@@ -194,7 +200,7 @@ String translateLightLevel(){
     } else if (greenhouseSensorData.lightLevel < 500) {
       Serial.println(" - Light");
       lightStr = "Light  ";
-    } else if (greenhouseSensorData.lightLevel < 800) {
+    } else if (greenhouseSensorData.lightLevel < 600) {
       Serial.println(" - Dim");
       lightStr = "Dim    ";
     } else {
@@ -282,6 +288,7 @@ void displayInfoLcd(){
   Serial.print(plant1.soilMoisture);
   Serial.print(plant2.soilMoisture);
   Serial.println();
+  
 
   if (greenhouseSensorData.waterLevel < 50){
     // wait a few seconds before displaying the warning
